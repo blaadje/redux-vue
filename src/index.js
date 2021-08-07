@@ -1,2 +1,2 @@
-export connect from './connect';
-export reduxStorePlugin from './reduxStorePlugin';
+export { default as connect } from "./connect";
+export { default as Provider } from "./Provider";
