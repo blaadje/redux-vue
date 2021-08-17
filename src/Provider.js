@@ -1,7 +1,7 @@
 import { Fragment, h, provide } from "vue";
 
 export default {
-  name: 'Provider',
+  name: "Provider",
   props: {
     store: {
       type: Object,
@@ -11,6 +11,8 @@ export default {
   setup(props, { slots }) {
     provide("store", props.store);
 
-    return () => h(Fragment, {}, slots.default());
+    return () => {
+      return h(Fragment, {}, slots.default());
+    };
   },
 };

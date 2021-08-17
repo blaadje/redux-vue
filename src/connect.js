@@ -1,4 +1,25 @@
+import isEqual from "lodash.isequal";
 import { defineComponent, h, onBeforeUnmount, inject, reactive } from "vue";
+
+import mapStateToPropsFactories from "./mapStateToProps";
+
+const match = (arg, factories, name) => {
+  for (let i = factories.length - 1; i >= 0; i -= 1) {
+    const result = factories[i](arg);
+
+    if (result) {
+      return result;
+    }
+  }
+
+  return (dispatch, options) => {
+    throw new Error(
+      `Invalid value of type ${typeof arg} for ${name} argument when connecting component ${
+        options.wrappedComponentName
+      }.`,
+    );
+  };
+};
 
 /**
  * @param mapStateToProps
@@ -6,37 +27,59 @@ import { defineComponent, h, onBeforeUnmount, inject, reactive } from "vue";
  * @returns Object
  */
 export default function connect(mapStateToProps, mapActionsToProps) {
-  mapStateToProps = mapStateToProps || noop;
-  mapActionsToProps = mapActionsToProps || noop;
+  const initMapStateToProps = match(
+    mapStateToProps,
+    mapStateToPropsFactories,
+    "mapStateToProps",
+  );
 
-  return (children) =>
-    defineComponent({
-      name: 'Connnect',
+  return (children) => {
+    return defineComponent({
+      name: "Connnect",
       setup(_, { attrs }) {
+        let currentStateValue;
         const store = inject("store");
         const props = reactive({});
 
         const handleStoreUpdate = () => {
-          const state = mapStateToProps(store.getState(), attrs) || {};
-          const actions = mapActionsToProps(store.dispatch, attrs) || {};
-          const actionNames = Object.keys(actions);
-          const stateNames = Object.keys(state);
+          const previousStateValue = currentStateValue;
+          const state = store.getState();
 
-          for (let i = 0; i < actionNames.length; i++) {
+          currentStateValue =
+            initMapStateToProps(state, attrs)(
+              // not sure about that
+              state,
+              attrs,
+            ) || {};
+          const actions = mapActionsToProps(store.dispatch, state, attrs) || {};
+
+          const actionNames = Object.keys(actions);
+          const stateNames = Object.keys(currentStateValue);
+
+          if (isEqual(previousStateValue, currentStateValue)) {
+            return;
+          }
+          for (let i = 0; i < actionNames.length; i += 1) {
             props[actionNames[i]] = actions[actionNames[i]];
           }
 
-          for (let i = 0; i < stateNames.length; i++) {
-            props[stateNames[i]] = state[stateNames[i]];
+          for (let i = 0; i < stateNames.length; i += 1) {
+            props[stateNames[i]] = currentStateValue[stateNames[i]];
           }
         };
 
         handleStoreUpdate();
+
         const unsubscribeStore = store.subscribe(handleStoreUpdate);
 
-        onBeforeUnmount(() => unsubscribeStore());
+        onBeforeUnmount(() => {
+          return unsubscribeStore();
+        });
 
-        return () => h(children, { ...props, ...attrs });
+        return () => {
+          return h(children, { ...props, ...attrs });
+        };
       },
     });
+  };
 }
