@@ -41,12 +41,14 @@ export default function connect(mapStateToProps, mapActionsToProps) {
         const store = inject("store");
         const props = reactive({});
 
+        const initState = initMapStateToProps(store.getState(), attrs);
+
         const handleStoreUpdate = () => {
           const previousStateValue = currentStateValue;
           const state = store.getState();
 
           currentStateValue =
-            initMapStateToProps(state, attrs)(
+            initState(
               // not sure about that
               state,
               attrs,
@@ -59,6 +61,7 @@ export default function connect(mapStateToProps, mapActionsToProps) {
           if (isEqual(previousStateValue, currentStateValue)) {
             return;
           }
+
           for (let i = 0; i < actionNames.length; i += 1) {
             props[actionNames[i]] = actions[actionNames[i]];
           }
