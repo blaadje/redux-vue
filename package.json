@@ -1,13 +1,15 @@
 {
-  "name": "redux-vue",
-  "version": "0.7.1",
+  "name": "@blaadje/redux-vue",
+  "version": "0.8.0",
   "description": "Vue Redux binding higher order component",
   "author": "Nadim Tuhin",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nadimtuhin/redux-vue.git"
+    "url": "git+https://github.com/nadimtuhin/redux-vue.git"
   },
-  "bugs": "https://github.com/nadimtuhin/redux-vue/issues",
+  "bugs": {
+    "url": "https://github.com/nadimtuhin/redux-vue/issues"
+  },
   "homepage": "http://nadimtuhin.com",
   "license": "MIT",
   "main": "lib/index.js",
@@ -38,14 +40,13 @@
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.24.0",
     "eslint-plugin-prettier": "^3.4.0",
-    "expect": "^1.20.2",
-    "mocha": "^3.0.2",
     "eslint": "^7.32.0",
     "prettier": "^2.3.2"
   },
   "dependencies": {
-    "lodash": "^4.17.4",
-    "lodash.isequal": "^4.5.0",
-    "vue": "^3.1.5"
+    "lodash.isequal": "^4.5.0"
+  },
+  "directories": {
+    "lib": "lib"
   }
 }
