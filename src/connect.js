@@ -40,7 +40,6 @@ export default function connect(mapStateToProps, mapActionsToProps) {
         let currentStateValue;
         const store = inject("store");
         const props = reactive({});
-
         const initState = initMapStateToProps(store.getState(), attrs);
 
         const handleStoreUpdate = () => {
@@ -71,15 +70,15 @@ export default function connect(mapStateToProps, mapActionsToProps) {
           }
         };
 
-        handleStoreUpdate();
-
         const unsubscribeStore = store.subscribe(handleStoreUpdate);
 
         onBeforeUnmount(() => {
-          return unsubscribeStore();
+          unsubscribeStore();
         });
 
         return () => {
+          handleStoreUpdate();
+
           return h(children, { ...props, ...attrs });
         };
       },
