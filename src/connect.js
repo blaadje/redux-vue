@@ -36,6 +36,8 @@ export default function connect(mapStateToProps, mapActionsToProps) {
   return (children) => {
     return defineComponent({
       name: "Connnect",
+      childProps: children.childProps,
+      isFunctionnal: typeof children === "function",
       setup(_, { attrs }) {
         let currentStateValue;
         const store = inject("store");
