@@ -37,3 +37,11 @@ export const verifyPlainObject = (value, displayName, methodName) => {
     );
   }
 };
+
+export function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export function toHandlerKey(str) {
+  return str ? `on${capitalize(str)}` : ``;
+}

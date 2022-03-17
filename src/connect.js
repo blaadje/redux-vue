@@ -1,7 +1,8 @@
 import isEqual from "lodash.isequal";
-import { defineComponent, h, onBeforeUnmount, inject, reactive } from "vue";
+import { defineComponent, h, onBeforeUnmount, inject, ref } from "vue";
 
 import mapStateToPropsFactories from "./mapStateToProps";
+import { toHandlerKey } from "./utils";
 
 const match = (arg, factories, name) => {
   for (let i = factories.length - 1; i >= 0; i -= 1) {
@@ -34,42 +35,57 @@ export default function connect(mapStateToProps, mapActionsToProps) {
   );
 
   return (children) => {
+    const childProps = children.props || children.childProps;
+
     return defineComponent({
       name: "Connnect",
-      childProps: children.childProps,
+      childProps,
       isFunctionnal: typeof children === "function",
       setup(_, { attrs }) {
         let currentStateValue;
         const store = inject("store");
-        const props = reactive({});
+        const props = ref({});
         const initState = initMapStateToProps(store.getState(), attrs);
 
         const handleStoreUpdate = () => {
           const previousStateValue = currentStateValue;
           const state = store.getState();
+          const childPropsArray = Array.isArray(childProps)
+            ? childProps
+            : Object.keys(childProps);
 
-          currentStateValue =
+          currentStateValue = Object.entries(
             initState(
               // not sure about that
               state,
               attrs,
-            ) || {};
-          const actions = mapActionsToProps(store.dispatch, state, attrs) || {};
+            ) || {},
+          ).reduce((acc, [key, value]) => {
+            return childPropsArray.includes(key)
+              ? { ...acc, [key]: value }
+              : acc;
+          }, {});
 
-          const actionNames = Object.keys(actions);
-          const stateNames = Object.keys(currentStateValue);
+          const actions = mapActionsToProps(store.dispatch, state, attrs) || {};
 
           if (isEqual(previousStateValue, currentStateValue)) {
             return;
           }
 
-          for (let i = 0; i < actionNames.length; i += 1) {
-            props[actionNames[i]] = actions[actionNames[i]];
-          }
+          const actionsListeners = Object.entries(actions).reduce(
+            (acc, [key, value]) => {
+              return {
+                ...acc,
+                [toHandlerKey(key)]: value,
+              };
+            },
+            {},
+          );
 
-          for (let i = 0; i < stateNames.length; i += 1) {
-            props[stateNames[i]] = currentStateValue[stateNames[i]];
-          }
+          props.value = {
+            ...currentStateValue,
+            ...actionsListeners,
+          };
         };
 
         const unsubscribeStore = store.subscribe(handleStoreUpdate);
@@ -81,7 +97,7 @@ export default function connect(mapStateToProps, mapActionsToProps) {
         return () => {
           handleStoreUpdate();
 
-          return h(children, { ...props, ...attrs });
+          return h(children, { ...props.value, ...attrs });
         };
       },
     });
