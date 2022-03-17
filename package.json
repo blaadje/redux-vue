@@ -1,6 +1,6 @@
 {
   "name": "@blaadje/redux-vue",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Vue Redux binding higher order component",
   "author": "Nadim Tuhin",
   "repository": {
