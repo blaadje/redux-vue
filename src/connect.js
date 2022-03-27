@@ -1,6 +1,7 @@
 import isEqual from "lodash.isequal";
 import { defineComponent, h, onBeforeUnmount, inject, ref } from "vue";
 
+import mapDispatchToPropsFactories from "./mapDispatchToProps";
 import mapStateToPropsFactories from "./mapStateToProps";
 import { toHandlerKey } from "./utils";
 
@@ -27,11 +28,17 @@ const match = (arg, factories, name) => {
  * @param mapActionsToProps
  * @returns Object
  */
-export default function connect(mapStateToProps, mapActionsToProps) {
+export default function connect(ownMapStateToProps, ownMapDispatchToProps) {
   const initMapStateToProps = match(
-    mapStateToProps,
+    ownMapStateToProps,
     mapStateToPropsFactories,
     "mapStateToProps",
+  );
+
+  const initMapDispatchToProps = match(
+    ownMapDispatchToProps,
+    mapDispatchToPropsFactories,
+    "mapDispatchToProps",
   );
 
   return (children) => {
@@ -40,33 +47,31 @@ export default function connect(mapStateToProps, mapActionsToProps) {
     return defineComponent({
       name: "Connnect",
       childProps,
-      isFunctionnal: typeof children === "function",
       setup(_, { attrs }) {
         let currentStateValue;
         const store = inject("store");
         const props = ref({});
         const initState = initMapStateToProps(store.getState(), attrs);
 
-        const handleStoreUpdate = () => {
+        function handleStoreUpdate() {
           const previousStateValue = currentStateValue;
-          const state = store.getState();
+          const mapDispatchToProps = initMapDispatchToProps(
+            store.dispatch,
+            attrs,
+          );
           const childPropsArray = Array.isArray(childProps)
             ? childProps
             : Object.keys(childProps);
 
           currentStateValue = Object.entries(
-            initState(
-              // not sure about that
-              state,
-              attrs,
-            ) || {},
+            initState(store.getState(), attrs) || {},
           ).reduce((acc, [key, value]) => {
             return childPropsArray.includes(key)
               ? { ...acc, [key]: value }
               : acc;
           }, {});
 
-          const actions = mapActionsToProps(store.dispatch, state, attrs) || {};
+          const actions = mapDispatchToProps(store.dispatch, attrs) || {};
 
           if (isEqual(previousStateValue, currentStateValue)) {
             return;
@@ -86,7 +91,7 @@ export default function connect(mapStateToProps, mapActionsToProps) {
             ...currentStateValue,
             ...actionsListeners,
           };
-        };
+        }
 
         const unsubscribeStore = store.subscribe(handleStoreUpdate);
 
@@ -94,7 +99,7 @@ export default function connect(mapStateToProps, mapActionsToProps) {
           unsubscribeStore();
         });
 
-        return () => {
+        return function render() {
           handleStoreUpdate();
 
           return h(children, { ...props.value, ...attrs });
