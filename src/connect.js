@@ -47,7 +47,7 @@ export default function connect(ownMapStateToProps, ownMapDispatchToProps) {
     return defineComponent({
       name: "Connnect",
       childProps,
-      setup(_, { attrs }) {
+      setup(_, { attrs, slots }) {
         let currentStateValue;
         const store = inject("store");
         const props = ref({});
@@ -102,7 +102,7 @@ export default function connect(ownMapStateToProps, ownMapDispatchToProps) {
         return function render() {
           handleStoreUpdate();
 
-          return h(children, { ...props.value, ...attrs });
+          return h(children, { ...props.value, ...attrs }, slots);
         };
       },
     });
